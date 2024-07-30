@@ -1,0 +1,6 @@
+-std=c++11
+-Wno-null-dereference
+-Wno-writable-strings
+-I/home/arla/dev/sta-lib/platform
+-DPLATFORM_GRAPHICS_SOFTWARE
+-DPLATFORM_SDL
