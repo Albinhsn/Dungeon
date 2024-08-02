@@ -5,5 +5,5 @@ set CommonLinkerFlags= -opt:ref user32.lib gdi32.lib winmm.lib
 
 call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 
-REM cl %CommonCompilerFlags%  .\src\game.cpp -LD /link -incremental:no -opt:ref -EXPORT:update
+cl %CommonCompilerFlags%  .\src\game.cpp /Fe:libgame.dll -LD /link %CommonLinkerFlags% -incremental:no -opt:ref -EXPORT:update
 cl %CommonCompilerFlags% .\src\main.cpp /link %CommonLinkerFlags%

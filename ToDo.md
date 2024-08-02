@@ -1,6 +1,6 @@
 
 
-# Fix input
+# Reminder that windows is ARGB
 # Arenas, preallocate all memory
 # Define concept of pixels in meters
 # Change dt to be f32

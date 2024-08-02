@@ -2,7 +2,7 @@
 #include "platform.cpp"
 #include "game.h"
 
-void (*update)(platform_renderer *, game_memory*, game_input*, f32 dt);
+void (*update)(game_renderer, platform_renderer*, game_memory*, game_input*, f32 dt);
 void* Handle;
 
 void
@@ -25,7 +25,7 @@ LoadGameLibrary(long& LibraryLastChanged)
       return;
     }
     void* TmpHandle = Sta_LibraryLoad(LibraryTmpName);
-    update          = (void (*)(platform_renderer*, game_memory*, game_input*, f32 dt))Sta_GetProcAddress(TmpHandle, "update");
+    update          = (void (*)(game_renderer, platform_renderer*, game_memory*, game_input*, f32 dt))Sta_GetProcAddress(TmpHandle, "update");
     if (update == 0)
     {
       LibraryLastChanged = 0;
@@ -48,8 +48,6 @@ TransferInput(game_input* GameInput, platform_input PlatformInput)
   SetKeyPressed(GameInput, InputKey_D, Sta_InputIsKeyPressed(PlatformInput, 'D'));
   SetKeyPressed(GameInput, InputKey_E, Sta_InputIsKeyPressed(PlatformInput, 'E'));
   SetKeyPressed(GameInput, InputKey_Q, Sta_InputIsKeyPressed(PlatformInput, 'Q'));
-  u8 keys = GameInput->KeysPressed;
-  Assert(keys == 0);
 }
 
 #if PLATFORM_WINDOWS
@@ -86,10 +84,12 @@ main()
 
   game_memory                     Memory               = {};
   game_input                      GameInput            = {};
+  game_renderer                   GameRenderer         = {};
+  GameRenderer.STA_DRAW_RECTANGLE                      = Sta_DrawRectangle;
 
   // uint32_t                        Color                = 0xFF00FFFF;
-  uint32_t                        End                  = Sta_GetTicks(), Start;
-  long                            GameLibraryLastChanged;
+  uint64_t End = Sta_GetTicks(), Start;
+  long     GameLibraryLastChanged;
   while (true)
   {
     Start = Sta_GetTicks();
@@ -104,7 +104,7 @@ main()
     f32 dt = (End - Start) * 1000.0f;
     if (update)
     {
-      update(&Renderer, &Memory, &GameInput, dt);
+      update(GameRenderer, &Renderer, &Memory, &GameInput, dt);
     }
 
     Sta_RendererSwapBuffer(Window, Renderer);

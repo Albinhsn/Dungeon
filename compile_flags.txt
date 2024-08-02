@@ -1,8 +1,0 @@
--std=c++11
--Wno-null-dereference
--Wno-writable-strings
-//-IC:\Program Files\dev\sta-lib\platform
-// -DPLATFORM_WINDOWS
--I/home/arla/dev/sta-lib/platform
--DPLATFORM_SDL
--DPLATFORM_GRAPHICS_SOFTWARE
