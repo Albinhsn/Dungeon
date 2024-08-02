@@ -6,6 +6,9 @@ TARGET = main
 c:
 	$(CC) $(CFLAGS) src/main.cpp -o main $(LDFLAGS)
 
+cdl:
+	$(CC) $(CFLAGS) -c -fpic src/game.cpp && gcc -shared -o libgame_temp.so game.o && mv libgame_temp.so libgame.so
+
 clean:
 	rm -rf obj/ $(TARGET)
 

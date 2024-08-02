@@ -1,15 +1,21 @@
 #include "platform.h"
 #include "platform.cpp"
+#include "game.h"
 
-void (*update)();
+void (*update)(platform_renderer *, game_memory*, game_input*, f32 dt);
 void* Handle;
 
 void
-get_game_functions_from_library(long& LibraryLastChanged)
+LoadGameLibrary(long& LibraryLastChanged)
 {
-  // check if newer version exist
+// check if newer version exist
+#if PLATFORM_WINDOWS
+  const char* LibraryName    = "./libgame.dll";
+  const char* LibraryTmpName = "./libgame_tmp.dll";
+#else
   const char* LibraryName    = "./libgame.so";
   const char* LibraryTmpName = "./libgame_tmp.so";
+#endif
   if (Sta_FileHasChanged(LibraryLastChanged, LibraryName))
 
   {
@@ -19,7 +25,7 @@ get_game_functions_from_library(long& LibraryLastChanged)
       return;
     }
     void* TmpHandle = Sta_LibraryLoad(LibraryTmpName);
-    update          = (void (*)())Sta_GetProcAddress(TmpHandle, "update");
+    update          = (void (*)(platform_renderer*, game_memory*, game_input*, f32 dt))Sta_GetProcAddress(TmpHandle, "update");
     if (update == 0)
     {
       LibraryLastChanged = 0;
@@ -31,6 +37,19 @@ get_game_functions_from_library(long& LibraryLastChanged)
     }
     Handle = TmpHandle;
   }
+}
+
+void
+TransferInput(game_input* GameInput, platform_input PlatformInput)
+{
+  SetKeyPressed(GameInput, InputKey_W, Sta_InputIsKeyPressed(PlatformInput, 'W'));
+  SetKeyPressed(GameInput, InputKey_A, Sta_InputIsKeyPressed(PlatformInput, 'A'));
+  SetKeyPressed(GameInput, InputKey_S, Sta_InputIsKeyPressed(PlatformInput, 'S'));
+  SetKeyPressed(GameInput, InputKey_D, Sta_InputIsKeyPressed(PlatformInput, 'D'));
+  SetKeyPressed(GameInput, InputKey_E, Sta_InputIsKeyPressed(PlatformInput, 'E'));
+  SetKeyPressed(GameInput, InputKey_Q, Sta_InputIsKeyPressed(PlatformInput, 'Q'));
+  u8 keys = GameInput->KeysPressed;
+  Assert(keys == 0);
 }
 
 #if PLATFORM_WINDOWS
@@ -63,22 +82,33 @@ main()
   platform_window_creation_result WindowCreationResult = Sta_WindowCreate(WindowCreationData);
   platform_window                 Window               = WindowCreationResult.Window;
   platform_renderer               Renderer             = WindowCreationResult.Renderer;
-  platform_input                  Input                = Sta_InputInit(&Window);
+  platform_input                  PlatformInput        = Sta_InputInit(&Window);
 
-  // long           Timer = 0;
+  game_memory                     Memory               = {};
+  game_input                      GameInput            = {};
 
-  uint32_t Color = 0xFF00FFFF;
+  // uint32_t                        Color                = 0xFF00FFFF;
+  uint32_t                        End                  = Sta_GetTicks(), Start;
+  long                            GameLibraryLastChanged;
   while (true)
   {
-    if (Sta_InputReadEvents(&Input))
+    Start = Sta_GetTicks();
+    LoadGameLibrary(GameLibraryLastChanged);
+    if (Sta_InputReadEvents(&PlatformInput))
     {
-      return 1;
+      return 0;
     }
-    uint64_t Start = Sta_GetTicks();
+    TransferInput(&GameInput, PlatformInput);
 
-    Sta_RendererClearBuffer(Renderer, Color);
+    // Sta_RendererClearBuffer(Renderer, Color);
+    f32 dt = (End - Start) * 1000.0f;
+    if (update)
+    {
+      update(&Renderer, &Memory, &GameInput, dt);
+    }
+
     Sta_RendererSwapBuffer(Window, Renderer);
-    uint64_t End = Sta_GetTicks();
+    End = Sta_GetTicks();
     // ToDo sleep? :)
     while (Start + 60 > End)
     {
